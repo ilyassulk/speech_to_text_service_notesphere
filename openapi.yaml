@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  title: NoteSphere AI API
+  version: 0.0.1 MVP
+  description: API для обработки запросов speech-to-text.
+servers:
+  - url: http://notesphere.ddns.net:8080
+    description: Development server
+
+paths:
+  /ai/speech-to-text/request:
+    post:
+      summary: Загрузка аудио и создание запроса
+      description: Принимает .opus файл, регистрирует запрос на speech-to-text и возвращает идентификатор запроса.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Аудиофайл в формате .opus.
+      responses:
+        '200':
+          description: Успешное создание запроса.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: "1964db0f-a112-4288-821f-4c024ab7bb05"
+                  status:
+                    type: string
+                    example: "wait"
+
+        '400':
+          description: Ошибка запроса (неверный тип файла или превышен размер)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                    example: "File size error (max 1000 KB)"
+                  - type: string
+                    example: "File type error (expected *.opus file)"
+                
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Internal server error
+
+  /ai/speech-to-text/result/{request_id}:
+    get:
+      summary: Проверка и получение результата обработки
+      description: Возвращает текущий статус запроса или результат обработки, если он завершен.
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: Идентификатор запроса.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ с текущим статусом или результатом.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: "request_id"
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                    example: "ok"
+                  result:
+                    type: string
+                    nullable: true
+                    example: "Привет, это тестовая запись."
+                  error:
+                    type: string
+                    nullable: true
+                    example: null
+              examples:
+                success:
+                  summary: Успешное завершение
+                  value:
+                    request_id: "1964db0f-a112-4288-821f-4c024ab7bb05"
+                    status: "ok"
+                    result: "Привет, это тестовая запись."
+                    error: null
+                processing:
+                  summary: Выполняется
+                  value:
+                    request_id: "1964db0f-a112-4288-821f-4c024ab7bb05"
+                    status: "proc"
+                    result: null
+                    error: null
+                pending:
+                  summary: В очереди
+                  value:
+                    request_id: "1964db0f-a112-4288-821f-4c024ab7bb05"
+                    status: "wait"
+                    result: null
+                    error: null
+                failed:
+                  summary: Ошибка обработки
+                  value:
+                    request_id: "1964db0f-a112-4288-821f-4c024ab7bb05"
+                    status: "err"
+                    result: null
+                    error: "Speech recognition failed."
+
+        '404':
+          description: Запрос не найден
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Request not found
+                
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Internal server error
+
+
+

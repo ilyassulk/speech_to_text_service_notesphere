@@ -1,0 +1,14 @@
+
+
+services:
+  notesphere-manager:
+    build:
+      context: ./speech_to_text_notesphere_manager
+    ports:
+      - "8080:8080" # Внешний порт:Внутренний порт (server.port)
+
+  notesphere-processor:
+    build:
+      context: ./speech_to_text_notesphere_processor
+    ports:
+      - "8081:8080" # Внешний порт:Внутренний порт (server.port)
