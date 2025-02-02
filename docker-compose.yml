@@ -1,14 +1,24 @@
-
+version: '3.8'
 
 services:
-  notesphere-manager:
-    build:
-      context: ./speech_to_text_notesphere_manager
-    ports:
-      - "8080:8080" # Внешний порт:Внутренний порт (server.port)
+  speech-to-text-notesphere-manager:
+    image: idsockero/speech-to-text-notesphere-manager:latest
+    networks:
+      - app-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
 
-  notesphere-processor:
-    build:
-      context: ./speech_to_text_notesphere_processor
-    ports:
-      - "8081:8080" # Внешний порт:Внутренний порт (server.port)
+  speech-to-text-notesphere-processor:
+    image: idsockero/speech-to-text-notesphere-processor:latest
+    networks:
+      - app-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+networks:
+  app-network:
+    driver: overlay

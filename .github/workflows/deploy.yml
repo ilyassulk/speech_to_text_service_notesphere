@@ -1,0 +1,80 @@
+name: CI/CD Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Клонирование репозитория
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 2. Аутентификация в Docker Hub (для сборки и пуша образов)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 3. Сборка и пуш образа для speech-to-text-notesphere-manager
+      - name: Build and Push Manager Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./speech_to_text_notesphere_manager
+          file: ./speech_to_text_notesphere_manager/Dockerfile
+          push: true
+          tags: idsockero/speech-to-text-notesphere-manager:latest
+
+      # 4. Сборка и пуш образа для speech-to-text-notesphere-processor
+      - name: Build and Push Processor Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./speech_to_text_notesphere_processor
+          file: ./speech_to_text_notesphere_processor/Dockerfile
+          push: true
+          tags: idsockero/speech-to-text-notesphere-processor:latest
+
+      # 5. Остановка работающего стека и удаление старых образов (используем sudo с -S)
+      - name: Stop running stack and remove old images
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            echo "Stopping existing stack..."
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack rm my_stack || true
+            echo "Waiting for the stack to stop..."
+            sleep 10
+            echo "Removing old manager image..."
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f idsockero/speech-to-text-notesphere-manager:latest || true
+            echo "Removing old processor image..."
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f idsockero/speech-to-text-notesphere-processor:latest || true
+
+      # 6. Передача файла docker-compose.yaml на удалённый сервер
+      - name: Copy docker-compose.yaml to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "docker-compose.yaml"
+          target: "~/"
+
+      # 7. Авторизация на сервере в Docker Hub и деплой нового стека (с sudo -S)
+      - name: Deploy new stack
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            echo "Logging in to Docker Hub on remote host..."
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            echo "Deploying new stack..."
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack deploy -c ~/docker-compose.yaml my_stack
