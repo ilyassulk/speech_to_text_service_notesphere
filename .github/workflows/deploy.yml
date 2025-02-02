@@ -64,7 +64,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           source: "docker-compose.yml"
-          target: "~/"
+          target: "~/docker-compose-${{ github.sha }}.yml"
 
       # 7. Авторизация на сервере в Docker Hub и деплой нового стека (с sudo -S)
       - name: Deploy new stack
@@ -77,4 +77,15 @@ jobs:
             echo "Logging in to Docker Hub on remote host..."
             echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
             echo "Deploying new stack..."
-            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack deploy -c ~/docker-compose.yaml speech_to_text_service_noteshphere_stack
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack deploy -c ~/docker-compose.yml speech_to_text_service_noteshphere_stack
+
+      # 8. Удаление уникального файла docker-compose с сервера для предотвращения конфликтов
+      - name: Remove remote docker-compose file
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            echo "Removing remote docker-compose file..."
+            rm -f ~/docker-compose-${{ github.sha }}.yml
