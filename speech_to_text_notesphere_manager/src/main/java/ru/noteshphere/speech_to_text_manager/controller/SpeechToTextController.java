@@ -13,7 +13,6 @@ import ru.noteshphere.speech_to_text_manager.exception.NotFoundException;
 import ru.noteshphere.speech_to_text_manager.service.SpeechToTextService;
 
 @RestController
-@RequestMapping("/ai/speech-to-text")
 public class SpeechToTextController {
 
     private final ru.noteshphere.speech_to_text_manager.service.SpeechToTextService service;
