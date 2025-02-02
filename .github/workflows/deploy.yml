@@ -28,7 +28,7 @@ jobs:
           context: ./speech_to_text_notesphere_manager
           file: ./speech_to_text_notesphere_manager/Dockerfile
           push: true
-          tags: idsockero/speech-to-text-notesphere-manager:latest
+          tags: isdockero/speech-to-text-notesphere-manager:latest
 
       # 4. Сборка и пуш образа для speech-to-text-notesphere-processor
       - name: Build and Push Processor Image
@@ -37,7 +37,7 @@ jobs:
           context: ./speech_to_text_notesphere_processor
           file: ./speech_to_text_notesphere_processor/Dockerfile
           push: true
-          tags: idsockero/speech-to-text-notesphere-processor:latest
+          tags: isdockero/speech-to-text-notesphere-processor:latest
 
       # 5. Остановка работающего стека и удаление старых образов (используем sudo с -S)
       - name: Stop running stack and remove old images
@@ -52,9 +52,9 @@ jobs:
             echo "Waiting for the stack to stop..."
             sleep 10
             echo "Removing old manager image..."
-            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f idsockero/speech-to-text-notesphere-manager:latest || true
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f isdockero/speech-to-text-notesphere-manager:latest || true
             echo "Removing old processor image..."
-            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f idsockero/speech-to-text-notesphere-processor:latest || true
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f isdockero/speech-to-text-notesphere-processor:latest || true
 
       # 6. Передача файла docker-compose.yaml на удалённый сервер
       - name: Copy docker-compose.yaml to server

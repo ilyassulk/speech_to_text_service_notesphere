@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   speech-to-text-notesphere-manager:
-    image: idsockero/speech-to-text-notesphere-manager:latest
+    image: isdockero/speech-to-text-notesphere-manager:latest
     networks:
       - app-network
     deploy:
@@ -11,7 +11,7 @@ services:
         condition: any
 
   speech-to-text-notesphere-processor:
-    image: idsockero/speech-to-text-notesphere-processor:latest
+    image: isdockero/speech-to-text-notesphere-processor:latest
     networks:
       - app-network
     deploy:
