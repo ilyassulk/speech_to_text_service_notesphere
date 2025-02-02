@@ -48,7 +48,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             echo "Stopping existing stack..."
-            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack rm my_stack || true
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack rm speech_to_text_service_noteshphere_stack || true
             echo "Waiting for the stack to stop..."
             sleep 10
             echo "Removing old manager image..."
@@ -56,14 +56,14 @@ jobs:
             echo "Removing old processor image..."
             echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker image rm -f isdockero/speech-to-text-notesphere-processor:latest || true
 
-      # 6. Передача файла docker-compose.yaml на удалённый сервер
-      - name: Copy docker-compose.yaml to server
+      # 6. Передача файла docker-compose.yml на удалённый сервер
+      - name: Copy docker-compose.yml to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ vars.SERVER_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: "docker-compose.yaml"
+          source: "docker-compose.yml"
           target: "~/"
 
       # 7. Авторизация на сервере в Docker Hub и деплой нового стека (с sudo -S)
@@ -77,4 +77,4 @@ jobs:
             echo "Logging in to Docker Hub on remote host..."
             echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
             echo "Deploying new stack..."
-            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack deploy -c ~/docker-compose.yaml my_stack
+            echo "${{ secrets.SSH_PASSWORD }}" | sudo -S docker stack deploy -c ~/docker-compose.yaml speech_to_text_service_noteshphere_stack
