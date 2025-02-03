@@ -21,4 +21,5 @@ services:
 
 networks:
   app-network:
-    driver: overlay
+    external: true
+
